@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Budget Buddy</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet" />
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#0050d4",
+              "surface-dim": "#cfd1ff",
+              "secondary-fixed-dim": "#58e7ab",
+              "surface-container-low": "#f1efff",
+              "surface-tint": "#0050d4",
+              "on-error-container": "#570008",
+              "primary-fixed": "#7b9cff",
+              "error-container": "#fb5151",
+              "tertiary-fixed": "#bda2ff",
+              "outline": "#71749e",
+              "inverse-primary": "#618bff",
+              "error-dim": "#9f0519",
+              "on-error": "#ffefee",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary": "#f8f0ff",
+              "tertiary": "#6a37d4",
+              "secondary": "#006947",
+              "on-primary-fixed-variant": "#00266e",
+              "on-primary-container": "#001e5a",
+              "background": "#f8f5ff",
+              "on-secondary-container": "#005a3c",
+              "on-secondary-fixed-variant": "#006544",
+              "on-primary": "#f1f2ff",
+              "tertiary-container": "#bda2ff",
+              "tertiary-dim": "#5e26c7",
+              "outline-variant": "#a7aad7",
+              "error": "#b31b25",
+              "surface-container-high": "#e0e0ff",
+              "on-tertiary-fixed-variant": "#4600a8",
+              "on-surface-variant": "#555881",
+              "on-surface": "#282b51",
+              "on-tertiary-container": "#3c0091",
+              "surface": "#f8f5ff",
+              "on-secondary-fixed": "#00452d",
+              "on-tertiary-fixed": "#1f0052",
+              "secondary-fixed": "#69f6b8",
+              "surface-container": "#e7e6ff",
+              "tertiary-fixed-dim": "#b091ff",
+              "on-primary-fixed": "#000000",
+              "secondary-dim": "#005c3d",
+              "primary-fixed-dim": "#658eff",
+              "surface-variant": "#d9daff",
+              "primary-dim": "#0046bb",
+              "primary-container": "#7b9cff",
+              "inverse-surface": "#06092f",
+              "on-background": "#282b51",
+              "inverse-on-surface": "#9799c6",
+              "surface-container-highest": "#d9daff",
+              "surface-bright": "#f8f5ff",
+              "secondary-container": "#69f6b8",
+              "on-secondary": "#c8ffe0"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #0050d4 0%, #6a37d4 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
