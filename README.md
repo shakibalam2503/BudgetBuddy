@@ -20,8 +20,8 @@ npm -v
 ##  Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo/frontend
+git clone [https://github.com/your-username/your-repo.git](https://github.com/shakibalam2503/BudgetBuddy.git)
+cd BugdetBuddy/frontend
 ```
 
 ---
