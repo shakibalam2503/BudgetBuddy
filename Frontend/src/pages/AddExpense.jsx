@@ -47,7 +47,7 @@ const AddExpense = () => {
                                 <div className="space-y-2">
                                     <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 ml-1">Category</label>
                                     <div className="relative">
-                                        <select className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl appearance-none text-on-surface font-body font-medium focus:ring-2 focus:ring-primary/20 transition-all focus:bg-surface-container-low">
+                                        <select className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl appearance-none bg-[image:none] text-on-surface font-body font-medium focus:ring-2 focus:ring-primary/20 transition-all focus:bg-surface-container-low">
                                             <option value="food">Food & Dining</option>
                                             <option value="transport">Transport</option>
                                             <option value="study">Study Materials</option>

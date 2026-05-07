@@ -13,15 +13,10 @@ const Expenses = () => {
     return (
         <div className="font-body">
             {/* Header Section */}
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-                <div className="space-y-2">
-                    <nav className="flex text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">
-                        <span>Finances</span>
-                        <span className="mx-2">/</span>
-                        <span className="text-primary">Expenses</span>
-                    </nav>
-                    <h2 className="text-5xl md:text-6xl font-headline font-extrabold tracking-tight text-on-background">Expenses</h2>
-                    <p className="text-on-surface-variant max-w-md font-body">Track your academic and personal spending with fluid precision. Manage your student budget effortlessly.</p>
+            <header className="flex justify-between items-end mb-10 pl-1">
+                <div>
+                    <h2 className="font-headline text-[32px] font-extrabold tracking-tight text-on-surface">Expenses</h2>
+                    <p className="text-on-surface-variant font-medium mt-1">Track your academic and personal spending with fluid precision. Manage your student budget effortlessly.</p>
                 </div>
                 <div>
                     <Link to="/dashboard/expenses/add" className="hidden md:flex bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-4 rounded-xl font-bold items-center gap-3 shadow-xl shadow-primary/20 hover:scale-105 transition-transform duration-300">

@@ -12,6 +12,8 @@ import Landing from './pages/Landing';
 import AddExpense from './pages/AddExpense';
 import AddCategory from './pages/AddCategory';
 import Insights from './pages/Insights';
+import InitiateGoal from './pages/InitiateGoal';
+import AddSavings from './pages/AddSavings';
 
 import { NavLink, useLocation } from 'react-router-dom';
 
@@ -61,10 +63,7 @@ const Layout = () => {
                             <span className="font-medium">{item.name}</span>
                         </Link>
                     ))}
-                    <Link to="/profile" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-white/50 dark:hover:bg-slate-800 rounded-xl transition-all duration-300">
-                        <span className="material-symbols-outlined">person</span>
-                        <span className="font-medium">Profile</span>
-                    </Link>
+
                     <Link to="/" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-white/50 dark:hover:bg-slate-800 rounded-xl transition-all duration-300">
                         <span className="material-symbols-outlined">logout</span>
                         <span className="font-medium">Logout</span>
@@ -117,10 +116,7 @@ const Layout = () => {
                     <span className="material-symbols-outlined">account_balance_wallet</span>
                     <span className="text-[10px] font-bold uppercase">Budget</span>
                 </Link>
-                <Link to="/profile" className={`flex flex-col items-center gap-1 ${isActive('/profile') ? 'text-primary' : 'text-on-surface-variant'}`}>
-                    <span className="material-symbols-outlined">person</span>
-                    <span className="text-[10px] font-bold uppercase">Profile</span>
-                </Link>
+
             </div>
         </div>
     );
@@ -139,6 +135,8 @@ function DocumentTitleUpdater() {
     else if (path === '/dashboard/expenses') title = 'BudgetBuddy / Expenses';
     else if (path === '/dashboard/income') title = 'BudgetBuddy / Income';
     else if (path === '/dashboard/goals') title = 'BudgetBuddy / Goals';
+    else if (path === '/dashboard/goals/add') title = 'BudgetBuddy / Initiate Goal';
+    else if (path === '/dashboard/goals/add-savings') title = 'BudgetBuddy / Add Savings';
     else if (path === '/dashboard/expenses/add') title = 'BudgetBuddy / Add Expense';
     
     document.title = title;
@@ -162,6 +160,8 @@ function App() {
           <Route path="expenses/add" element={<AddExpense />} />
           <Route path="income" element={<Income />} />
           <Route path="goals" element={<Goals />} />
+          <Route path="goals/add" element={<InitiateGoal />} />
+          <Route path="goals/add-savings" element={<AddSavings />} />
           <Route path="insights" element={<Insights />} />
         </Route>
       </Routes>

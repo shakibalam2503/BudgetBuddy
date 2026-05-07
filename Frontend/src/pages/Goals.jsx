@@ -1,10 +1,14 @@
 import React from 'react';
-
+import { Link } from 'react-router-dom';
 const Goals = () => {
     return (
         <div className="relative font-body">
             {/* Header Section */}
-            <header className="flex justify-end items-center mb-8 pl-1">
+            <header className="flex justify-between items-end mb-10 pl-1">
+                <div>
+                    <h2 className="font-headline text-[32px] font-extrabold tracking-tight text-on-surface">Financial Goals</h2>
+                    <p className="text-on-surface-variant font-medium mt-1">Set and track milestones for your academic and personal journey.</p>
+                </div>
                 <div className="flex items-center gap-4">
                     <button className="w-12 h-12 flex items-center justify-center rounded-full bg-[#F3F4FB] text-[#71749E] hover:text-[#0050D4] transition-colors relative">
                         <span className="material-symbols-outlined">notifications</span>
@@ -87,9 +91,9 @@ const Goals = () => {
                             <div className="bg-[#A7F3D0] text-[#065F46] text-[11px] font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider backdrop-blur-sm shadow-sm ring-1 ring-black/5">
                                 65% Complete
                             </div>
-                            <button className="bg-[#5284FE] text-white text-[13px] font-bold px-5 py-2.5 rounded-[12px] shadow-[0_6px_16px_rgba(82,132,254,0.3)] hover:bg-[#3B72E0] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-1.5">
+                            <Link to="/dashboard/goals/add-savings" className="bg-[#5284FE] text-white text-[13px] font-bold px-5 py-2.5 rounded-[12px] shadow-[0_6px_16px_rgba(82,132,254,0.3)] hover:bg-[#3B72E0] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#5284FE] focus:ring-offset-2">
                                 <span className="material-symbols-outlined text-[18px]">add</span> Add Savings
-                            </button>
+                            </Link>
                         </div>
                     </div>
 
@@ -127,14 +131,14 @@ const Goals = () => {
                             <div className="bg-[#E2E8F0] text-[#475569] text-[11px] font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-sm ring-1 ring-black/5">
                                 20% Complete
                             </div>
-                            <button className="bg-[#5284FE] text-white text-[13px] font-bold px-5 py-2.5 rounded-[12px] shadow-[0_6px_16px_rgba(82,132,254,0.3)] hover:bg-[#3B72E0] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-1.5">
+                            <Link to="/dashboard/goals/add-savings" className="bg-[#5284FE] text-white text-[13px] font-bold px-5 py-2.5 rounded-[12px] shadow-[0_6px_16px_rgba(82,132,254,0.3)] hover:bg-[#3B72E0] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#5284FE] focus:ring-offset-2">
                                 <span className="material-symbols-outlined text-[18px]">add</span> Add Savings
-                            </button>
+                            </Link>
                         </div>
                     </div>
 
                     {/* Initiate New Goal */}
-                    <div className="bg-[#F8FAFC] rounded-[24px] p-8 border-[2px] border-dashed border-[#CBD5E1] flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-[#94A3B8] hover:bg-[#F1F5F9] transition-all h-[180px] group w-full">
+                    <Link to="/dashboard/goals/add" className="bg-[#F8FAFC] rounded-[24px] p-8 border-[2px] border-dashed border-[#CBD5E1] flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-[#94A3B8] hover:bg-[#F1F5F9] transition-all h-[180px] group w-full block outline-none focus:ring-2 focus:ring-[#5284FE] focus:ring-offset-2">
                         <div className="w-12 h-12 rounded-full bg-white text-[#5284FE] flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
                             <span className="material-symbols-outlined text-[24px] font-bold">add</span>
                         </div>
@@ -142,7 +146,7 @@ const Goals = () => {
                             <h4 className="font-headline font-bold text-[16px] text-[#1E293B]">Initiate New Goal</h4>
                             <p className="text-[12px] text-[#64748B] font-medium mt-1">Define your next academic milestone</p>
                         </div>
-                    </div>
+                    </Link>
                 </div>
 
                 {/* Right Column - Side Widgets */}
