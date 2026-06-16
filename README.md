@@ -409,58 +409,6 @@ PORT=5000
 
 ---
 
-## Codebase Analysis
-
-### Frontend Analysis
-
-The frontend is organized around route-based pages. `App.jsx` defines the main routes and dashboard layout. `api.js` centralizes Axios configuration and automatically attaches the JWT token from `localStorage`.
-
-Important frontend pages:
-
-- `Landing.jsx`: Public marketing and introduction page
-- `SignUp.jsx`: User registration form
-- `SignIn.jsx`: User login form
-- `ForgotPassword.jsx`: Password recovery interface
-- `Dashboard.jsx`: Main financial summary dashboard
-- `Income.jsx`: Income entry, distribution, and PDF export
-- `Expenses.jsx`: Expense table, filters, delete action, and receipt preview
-- `AddExpense.jsx`: Expense creation form with receipt upload
-- `Budget.jsx`: Budget allocation, spending comparison, and monthly PDF report
-- `AddCategory.jsx`: Budget category creation and update form
-- `Goals.jsx`: Active and completed savings goals
-- `InitiateGoal.jsx`: Goal creation form
-- `AddSavings.jsx`: Savings deposit form
-- `Insights.jsx`: Analytical view of income, expenses, savings, and trends
-
-### Backend Analysis
-
-The backend uses a modular Express structure:
-
-- `server.js` initializes Express, middleware, static uploads, database setup, and route mounting.
-- `config/db.js` creates the MySQL database, initializes tables, and exposes the connection pool.
-- `config/constants.js` stores server-level constants such as port and JWT secret.
-- `controllers/` contains business logic for authentication, dashboard data, income, expenses, budgets, goals, and uploads.
-- `routes/` maps HTTP endpoints to controller functions.
-- `middleware/authMiddleware.js` protects private routes by verifying JWT tokens.
-- `middleware/uploadMiddleware.js` configures Multer disk storage for receipt uploads.
-
-### Security Features
-
-- Passwords are hashed before storage.
-- JWT tokens protect user-specific data routes.
-- SQL queries use parameterized placeholders to reduce SQL injection risk.
-- Expense, budget, income, and goal data are filtered by authenticated user ID.
-- Uploaded receipt files are limited to 5 MB.
-
-### Important Notes
-
-- The password reset code is printed in the backend console for laboratory/local testing instead of being emailed.
-- MySQL credentials are currently hardcoded in `Backend/config/db.js`; this is acceptable for a lab setup but should be moved to environment variables for production.
-- The backend has no `start` script in `package.json`, so the server is started directly with `node server.js`.
-- The frontend uses Tailwind CSS through a CDN script inside `index.html`, not through a local Tailwind build pipeline.
-
----
-
 ## Laboratory Learning Outcomes
 
 This project demonstrates the following web application development concepts:
