@@ -267,62 +267,19 @@ Each finance-related table is connected to the logged-in user through `user_id`,
 
 ## API Endpoints
 
-Base backend URL:
+The backend exposes REST API routes for authentication and finance management. Most finance-related routes are protected with JWT authentication.
 
-```text
-http://localhost:5000
-```
+Main route groups:
 
-### Authentication Routes
+- `/api/auth` - signup, signin, forgot password, and password reset
+- `/api/dashboard` - dashboard summary data
+- `/api/income` - income records
+- `/api/expenses` - expense records
+- `/api/budget` - category budget limits
+- `/api/goals` - savings goals and deposits
+- `/api/upload` - receipt image uploads
 
-| Method | Endpoint | Description | Protected |
-|---|---|---|---|
-| `POST` | `/api/auth/signup` | Register a new user | No |
-| `POST` | `/api/auth/signin` | Sign in and receive JWT token | No |
-| `POST` | `/api/auth/forgot-password` | Generate password reset code | No |
-| `POST` | `/api/auth/reset-password` | Reset password using code | No |
-
-### Dashboard Routes
-
-| Method | Endpoint | Description | Protected |
-|---|---|---|---|
-| `GET` | `/api/dashboard` | Get summary dashboard metrics | Yes |
-
-### Income Routes
-
-| Method | Endpoint | Description | Protected |
-|---|---|---|---|
-| `GET` | `/api/income` | Get all income records for logged-in user | Yes |
-| `POST` | `/api/income` | Create a new income record | Yes |
-
-### Expense Routes
-
-| Method | Endpoint | Description | Protected |
-|---|---|---|---|
-| `GET` | `/api/expenses` | Get all expense records for logged-in user | Yes |
-| `POST` | `/api/expenses` | Create a new expense record | Yes |
-| `DELETE` | `/api/expenses/:id` | Delete an expense by ID | Yes |
-
-### Budget Routes
-
-| Method | Endpoint | Description | Protected |
-|---|---|---|---|
-| `GET` | `/api/budget` | Get all budgets for logged-in user | Yes |
-| `POST` | `/api/budget` | Create or update a category budget | Yes |
-
-### Goal Routes
-
-| Method | Endpoint | Description | Protected |
-|---|---|---|---|
-| `GET` | `/api/goals` | Get all savings goals | Yes |
-| `POST` | `/api/goals` | Create a new savings goal | Yes |
-| `POST` | `/api/goals/:id/savings` | Add savings amount to a goal | Yes |
-
-### Upload Routes
-
-| Method | Endpoint | Description | Protected |
-|---|---|---|---|
-| `POST` | `/api/upload` | Upload a receipt image using form field `receipt` | Yes |
+The frontend communicates with these routes through the shared Axios instance in `Frontend/src/api.js`.
 
 ---
 
