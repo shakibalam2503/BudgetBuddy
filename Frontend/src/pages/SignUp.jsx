@@ -1,8 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../api';
 
 const SignUp = () => {
     const navigate = useNavigate();
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [terms, setTerms] = useState(false);
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+        if (!terms) {
+            setError('Please accept the terms and conditions');
+            return;
+        }
+
+        setLoading(false);
+        try {
+            setLoading(true);
+            const response = await api.post('/api/auth/signup', { name, email, phone, password });
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.response?.data?.error || 'Registration failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <main className="min-h-screen flex flex-col md:flex-row overflow-hidden bg-surface font-body text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
             {/* Left Side: Visual Anchor */}
@@ -56,16 +92,28 @@ const SignUp = () => {
                         <p className="text-on-surface-variant text-[15px] font-medium">Start your journey with BudgetBuddy today.</p>
                     </div>
                     
-                    <form className="space-y-5" onSubmit={(e) => {
-                        e.preventDefault();
-                        navigate('/dashboard');
-                    }}>
+                    {error && (
+                        <div className="mb-6 p-4 bg-error-container text-on-error-container rounded-xl text-sm font-bold flex items-center gap-2">
+                            <span className="material-symbols-outlined">error</span>
+                            {error}
+                        </div>
+                    )}
+                    
+                    <form className="space-y-5" onSubmit={handleSubmit}>
                         {/* Name Field */}
                         <div className="space-y-1.5">
                             <label className="block text-[13px] font-semibold text-on-surface-variant ml-1" htmlFor="name">Name</label>
                             <div className="relative group">
                                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors text-xl">person</span>
-                                <input className="w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border-none rounded-[10px] ring-1 ring-outline-variant/15 focus:ring-0 focus:outline-none transition-all placeholder:text-outline-variant/60 shadow-[0_2px_10px_rgba(40,43,81,0.02)]" id="name" placeholder="Enter your full name" type="text"/>
+                                <input 
+                                    className="w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border-none rounded-[10px] ring-1 ring-outline-variant/15 focus:ring-0 focus:outline-none transition-all placeholder:text-outline-variant/60 shadow-[0_2px_10px_rgba(40,43,81,0.02)]" 
+                                    id="name" 
+                                    placeholder="Enter your full name" 
+                                    type="text"
+                                    required
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                />
                             </div>
                         </div>
                         
@@ -74,7 +122,14 @@ const SignUp = () => {
                             <label className="block text-[13px] font-semibold text-on-surface-variant ml-1" htmlFor="phone">Phone Number</label>
                             <div className="relative group">
                                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors text-xl">smartphone</span>
-                                <input className="w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border-none rounded-[10px] ring-1 ring-outline-variant/15 focus:ring-0 focus:outline-none transition-all placeholder:text-outline-variant/60 shadow-[0_2px_10px_rgba(40,43,81,0.02)]" id="phone" placeholder="+1 (555) 000-0000" type="tel"/>
+                                <input 
+                                    className="w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border-none rounded-[10px] ring-1 ring-outline-variant/15 focus:ring-0 focus:outline-none transition-all placeholder:text-outline-variant/60 shadow-[0_2px_10px_rgba(40,43,81,0.02)]" 
+                                    id="phone" 
+                                    placeholder="+1 (555) 000-0000" 
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                />
                             </div>
                         </div>
                         
@@ -83,7 +138,15 @@ const SignUp = () => {
                             <label className="block text-[13px] font-semibold text-on-surface-variant ml-1" htmlFor="email">Email Address</label>
                             <div className="relative group">
                                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors text-xl">mail</span>
-                                <input className="w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border-none rounded-[10px] ring-1 ring-outline-variant/15 focus:ring-0 focus:outline-none transition-all placeholder:text-outline-variant/60 shadow-[0_2px_10px_rgba(40,43,81,0.02)]" id="email" placeholder="name@university.edu" type="email"/>
+                                <input 
+                                    className="w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border-none rounded-[10px] ring-1 ring-outline-variant/15 focus:ring-0 focus:outline-none transition-all placeholder:text-outline-variant/60 shadow-[0_2px_10px_rgba(40,43,81,0.02)]" 
+                                    id="email" 
+                                    placeholder="name@university.edu" 
+                                    type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
                             </div>
                         </div>
                         
@@ -93,14 +156,30 @@ const SignUp = () => {
                                 <label className="block text-[13px] font-semibold text-on-surface-variant ml-1" htmlFor="password">Password</label>
                                 <div className="relative group">
                                     <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors text-xl">lock</span>
-                                    <input className="w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border-none rounded-[10px] ring-1 ring-outline-variant/15 focus:ring-0 focus:outline-none transition-all placeholder:text-outline-variant/60 shadow-[0_2px_10px_rgba(40,43,81,0.02)]" id="password" placeholder="••••••••" type="password"/>
+                                    <input 
+                                        className="w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border-none rounded-[10px] ring-1 ring-outline-variant/15 focus:ring-0 focus:outline-none transition-all placeholder:text-outline-variant/60 shadow-[0_2px_10px_rgba(40,43,81,0.02)]" 
+                                        id="password" 
+                                        placeholder="••••••••" 
+                                        type="password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                    />
                                 </div>
                             </div>
                             <div className="space-y-1.5">
                                 <label className="block text-[13px] font-semibold text-on-surface-variant ml-1" htmlFor="confirm-password">Confirm Password</label>
                                 <div className="relative group">
                                     <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors text-xl">lock_reset</span>
-                                    <input className="w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border-none rounded-[10px] ring-1 ring-outline-variant/15 focus:ring-0 focus:outline-none transition-all placeholder:text-outline-variant/60 shadow-[0_2px_10px_rgba(40,43,81,0.02)]" id="confirm-password" placeholder="••••••••" type="password"/>
+                                    <input 
+                                        className="w-full pl-12 pr-4 py-3.5 bg-surface-container-lowest border-none rounded-[10px] ring-1 ring-outline-variant/15 focus:ring-0 focus:outline-none transition-all placeholder:text-outline-variant/60 shadow-[0_2px_10px_rgba(40,43,81,0.02)]" 
+                                        id="confirm-password" 
+                                        placeholder="••••••••" 
+                                        type="password"
+                                        required
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -108,7 +187,13 @@ const SignUp = () => {
                         {/* Terms Checkbox */}
                         <div className="flex items-start gap-3 py-3">
                             <div className="flex items-center h-5">
-                                <input className="w-4 h-4 rounded text-primary border-outline-variant/40 focus:ring-primary-container bg-surface-container-lowest cursor-pointer" id="terms" type="checkbox"/>
+                                <input 
+                                    className="w-4 h-4 rounded text-primary border-outline-variant/40 focus:ring-primary-container bg-surface-container-lowest cursor-pointer" 
+                                    id="terms" 
+                                    type="checkbox"
+                                    checked={terms}
+                                    onChange={(e) => setTerms(e.target.checked)}
+                                />
                             </div>
                             <label className="text-[13px] text-on-surface-variant leading-tight" htmlFor="terms">
                                 I accept all the <span className="text-primary font-bold cursor-pointer hover:underline">terms and conditions</span> and the privacy policy of Academic Atelier.
@@ -117,8 +202,12 @@ const SignUp = () => {
                         
                         {/* Action Button */}
                         <div className="pt-2">
-                            <button className="w-full py-4 px-6 bg-primary text-on-primary font-body font-semibold text-[15px] rounded-xl hover:bg-[#0046bb] shadow-[0_4px_14px_rgba(0,80,212,0.3)] active:scale-[0.98] transition-all duration-200" type="submit">
-                                Create Account
+                            <button 
+                                className="w-full py-4 px-6 bg-primary text-on-primary font-body font-semibold text-[15px] rounded-xl hover:bg-[#0046bb] shadow-[0_4px_14px_rgba(0,80,212,0.3)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50" 
+                                type="submit"
+                                disabled={loading}
+                            >
+                                {loading ? 'Creating Account...' : 'Create Account'}
                             </button>
                         </div>
                     </form>

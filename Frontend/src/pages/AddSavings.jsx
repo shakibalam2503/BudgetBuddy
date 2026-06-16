@@ -1,13 +1,63 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';
 
 const AddSavings = () => {
     const navigate = useNavigate();
+    const [amount, setAmount] = useState('');
+    const [goalId, setGoalId] = useState('');
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [source, setSource] = useState('paycheck');
+    const [notes, setNotes] = useState('');
+    const [goals, setGoals] = useState([]);
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    useEffect(() => {
+        const fetchGoals = async () => {
+            try {
+                const response = await api.get('/api/goals');
+                // Only saving to active goals where target not fully reached yet
+                const active = response.data.filter(g => parseFloat(g.current_amount) < parseFloat(g.target_amount));
+                setGoals(active);
+                if (active.length > 0) {
+                    setGoalId(active[0].id);
+                }
+            } catch (err) {
+                console.error("Error fetching goals", err);
+            }
+        };
+
+        fetchGoals();
+    }, []);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle adding savings logic here
-        navigate('/dashboard/goals');
+        setError('');
+
+        if (!amount || !goalId || !date) {
+            setError('Please enter amount, select a goal, and enter date.');
+            return;
+        }
+
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            setError('Please enter a valid amount.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await api.post(`/api/goals/${goalId}/savings`, {
+                amount: parsedAmount
+            });
+            // We can also record this as a special transaction or ledger note if desired, but updating the goal amount directly is the API design
+            navigate('/dashboard/goals');
+        } catch (err) {
+            setError(err.response?.data?.error || 'Failed to add savings.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -21,9 +71,6 @@ const AddSavings = () => {
                 </div>
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-4 text-on-surface-variant">
-                        <button className="hover:opacity-80 transition-opacity">
-                            <span className="material-symbols-outlined">notifications</span>
-                        </button>
                         <button className="hover:opacity-80 transition-opacity">
                             <span className="material-symbols-outlined">help_outline</span>
                         </button>
@@ -42,6 +89,14 @@ const AddSavings = () => {
                             <h2 className="text-2xl font-extrabold tracking-tight text-on-surface mb-2 font-headline">Deposit Savings</h2>
                             <p className="text-on-surface-variant text-sm font-body">Record your recent savings to see your progress update.</p>
                         </header>
+
+                        {error && (
+                            <div className="mb-6 p-4 bg-error-container text-on-error-container rounded-xl text-sm font-bold flex items-center gap-2">
+                                <span className="material-symbols-outlined">error</span>
+                                {error}
+                            </div>
+                        )}
+
                         <form onSubmit={handleSubmit} className="space-y-8">
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -49,13 +104,15 @@ const AddSavings = () => {
                                 <div className="space-y-2">
                                     <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 ml-1">Amount to Add</label>
                                     <div className="relative flex items-center group">
-                                        <span className="absolute left-5 text-xl font-bold text-[#10B981]">$</span>
+                                        <span className="absolute left-5 text-xl font-bold text-[#10B981]">৳</span>
                                         <input 
                                             className="w-full pl-10 pr-5 py-4 bg-surface-container-low border-none rounded-xl text-xl font-headline font-bold text-on-surface placeholder:text-outline-variant focus:ring-0 transition-all border-b-2 border-transparent focus:border-[#10B981] focus:bg-surface-container-low" 
                                             placeholder="0.00" 
                                             step="0.01" 
                                             type="number"
                                             required
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value)}
                                         />
                                     </div>
                                 </div>
@@ -63,10 +120,19 @@ const AddSavings = () => {
                                 <div className="space-y-2">
                                     <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 ml-1">Select Goal</label>
                                     <div className="relative">
-                                        <select className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl appearance-none bg-[image:none] text-on-surface font-body font-medium focus:ring-2 focus:ring-[#10B981]/20 transition-all focus:bg-surface-container-low" required>
-                                            <option value="" disabled selected>Choose a goal...</option>
-                                            <option value="laptop">Buy Laptop</option>
-                                            <option value="trip">Summer Trip</option>
+                                        <select 
+                                            className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl appearance-none bg-[image:none] text-on-surface font-body font-medium focus:ring-2 focus:ring-[#10B981]/20 transition-all focus:bg-surface-container-low" 
+                                            required
+                                            value={goalId}
+                                            onChange={(e) => setGoalId(e.target.value)}
+                                        >
+                                            {goals.length === 0 ? (
+                                                <option value="" disabled>No active goals found...</option>
+                                            ) : (
+                                                goals.map((g) => (
+                                                    <option key={g.id} value={g.id}>{g.name} (৳{parseFloat(g.current_amount).toLocaleString()} / ৳{parseFloat(g.target_amount).toLocaleString()})</option>
+                                                ))
+                                            )}
                                         </select>
                                         <span className="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined pointer-events-none text-on-surface-variant">expand_more</span>
                                     </div>
@@ -82,6 +148,8 @@ const AddSavings = () => {
                                             className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl text-on-surface font-body font-medium focus:ring-2 focus:ring-[#10B981]/20 transition-all focus:bg-surface-container-low" 
                                             type="date"
                                             required
+                                            value={date}
+                                            onChange={(e) => setDate(e.target.value)}
                                         />
                                     </div>
                                 </div>
@@ -89,7 +157,11 @@ const AddSavings = () => {
                                 <div className="space-y-2">
                                     <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 ml-1">Source</label>
                                     <div className="relative">
-                                        <select className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl appearance-none bg-[image:none] text-on-surface font-body font-medium focus:ring-2 focus:ring-[#10B981]/20 transition-all focus:bg-surface-container-low">
+                                        <select 
+                                            className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl appearance-none bg-[image:none] text-on-surface font-body font-medium focus:ring-2 focus:ring-[#10B981]/20 transition-all focus:bg-surface-container-low"
+                                            value={source}
+                                            onChange={(e) => setSource(e.target.value)}
+                                        >
                                             <option value="paycheck">Paycheck</option>
                                             <option value="freelance">Freelance/Side Hustle</option>
                                             <option value="gift">Gift</option>
@@ -103,13 +175,23 @@ const AddSavings = () => {
                             {/* Notes Field */}
                             <div className="space-y-2">
                                 <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 ml-1">Notes</label>
-                                <textarea className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl text-on-surface font-body placeholder:text-outline-variant focus:ring-2 focus:ring-[#10B981]/20 transition-all focus:bg-surface-container-low resize-none" placeholder="Any details..." rows="2"></textarea>
+                                <textarea 
+                                    className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl text-on-surface font-body placeholder:text-outline-variant focus:ring-2 focus:ring-[#10B981]/20 transition-all focus:bg-surface-container-low resize-none" 
+                                    placeholder="Any details..." 
+                                    rows="2"
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                ></textarea>
                             </div>
                             
                             {/* Action Button */}
-                            <button className="w-full py-5 bg-[#10B981] text-white font-headline font-bold text-lg rounded-xl shadow-lg shadow-[#10B981]/30 hover:scale-[1.01] active:scale-95 hover:bg-[#059669] transition-all flex items-center justify-center gap-3" type="submit">
+                            <button 
+                                className="w-full py-5 bg-[#10B981] text-white font-headline font-bold text-lg rounded-xl shadow-lg shadow-[#10B981]/30 hover:scale-[1.01] active:scale-95 hover:bg-[#059669] transition-all flex items-center justify-center gap-3 disabled:opacity-50" 
+                                type="submit"
+                                disabled={loading || goals.length === 0}
+                            >
                                 <span className="material-symbols-outlined text-white" style={{fontVariationSettings: "'FILL' 1"}}>add_circle</span>
-                                Add Savings
+                                {loading ? 'Depositing Savings...' : 'Add Savings'}
                             </button>
                         </form>
                     </div>

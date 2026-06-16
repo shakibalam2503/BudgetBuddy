@@ -79,7 +79,7 @@ const Landing = () => {
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-sm font-bold">
                                             <span>Food Budget</span>
-                                            <span>$42.50 / $80</span>
+                                            <span>৳42.50 / ৳80</span>
                                         </div>
                                         <div className="h-2 bg-surface-container rounded-full overflow-hidden">
                                             <div className="h-full bg-secondary w-[53%] rounded-full"></div>
@@ -119,7 +119,7 @@ const Landing = () => {
                                                 <div className="text-xs text-on-surface-variant">Food & Dining • Today</div>
                                             </div>
                                         </div>
-                                        <div className="font-bold text-error">-$14.50</div>
+                                        <div className="font-bold text-error">-৳14.50</div>
                                     </div>
                                     <div className="bg-surface-container-lowest p-4 rounded-xl flex items-center justify-between shadow-sm">
                                         <div className="flex items-center gap-3">
@@ -131,7 +131,7 @@ const Landing = () => {
                                                 <div className="text-xs text-on-surface-variant">Education • Yesterday</div>
                                             </div>
                                         </div>
-                                        <div className="font-bold text-on-surface">-$182.00</div>
+                                        <div className="font-bold text-on-surface">-৳182.00</div>
                                     </div>
                                 </div>
                             </div>
@@ -154,7 +154,7 @@ const Landing = () => {
                                     <div className="h-3 bg-white/20 rounded-full overflow-hidden">
                                         <div className="h-full bg-secondary-fixed rounded-full" style={{ width: '75%' }}></div>
                                     </div>
-                                    <div className="mt-2 text-xs opacity-70">$1,500 of $2,000 saved</div>
+                                    <div className="mt-2 text-xs opacity-70">৳1,500 of ৳2,000 saved</div>
                                 </div>
                                 <div>
                                     <div className="flex justify-between mb-3 text-sm">
@@ -164,7 +164,7 @@ const Landing = () => {
                                     <div className="h-3 bg-white/20 rounded-full overflow-hidden">
                                         <div className="h-full bg-secondary-fixed rounded-full" style={{ width: '40%' }}></div>
                                     </div>
-                                    <div className="mt-2 text-xs opacity-70">$800 of $2,000 saved</div>
+                                    <div className="mt-2 text-xs opacity-70">৳800 of ৳2,000 saved</div>
                                 </div>
                             </div>
                             <button className="mt-auto bg-surface-container-lowest text-primary py-4 rounded-xl font-bold text-center">
@@ -182,18 +182,18 @@ const Landing = () => {
                                         <circle className="text-primary" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" strokeDasharray="502.4" strokeDashoffset="400" strokeLinecap="round" strokeWidth="24"></circle>
                                     </svg>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-3xl font-extrabold text-on-surface font-headline">$2.4k</span>
+                                        <span className="text-3xl font-extrabold text-on-surface font-headline">৳2.4k</span>
                                         <span className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">Spent</span>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 w-full">
                                     <div className="bg-surface-container-lowest p-4 rounded-xl">
                                         <div className="text-xs font-bold text-primary uppercase mb-1">Fixed</div>
-                                        <div className="text-lg font-bold p-0">$1,200</div>
+                                        <div className="text-lg font-bold p-0">৳1,200</div>
                                     </div>
                                     <div className="bg-surface-container-lowest p-4 rounded-xl">
                                         <div className="text-xs font-bold text-secondary uppercase mb-1">Flexible</div>
-                                        <div className="text-lg font-bold p-0">$840</div>
+                                        <div className="text-lg font-bold p-0">৳840</div>
                                     </div>
                                 </div>
                             </div>
@@ -205,7 +205,7 @@ const Landing = () => {
                                     <span className="material-symbols-outlined text-primary">lightbulb</span>
                                     <h3 className="text-2xl font-bold font-headline">Smart Insights</h3>
                                 </div>
-                                <p className="text-on-surface-variant mb-8">Our AI analyzes your habits to find hidden savings. This month, you could have saved an extra $45 by brewing coffee at home.</p>
+                                <p className="text-on-surface-variant mb-8">Our AI analyzes your habits to find hidden savings. This month, you could have saved an extra ৳45 by brewing coffee at home.</p>
                                 <div className="space-y-6">
                                     <div className="flex gap-4 p-4 hover:bg-surface-container-low rounded-2xl transition-colors group cursor-pointer">
                                         <div className="shrink-0 w-12 h-12 bg-secondary-container rounded-xl flex items-center justify-center">
@@ -213,7 +213,7 @@ const Landing = () => {
                                         </div>
                                         <div>
                                             <div className="font-bold group-hover:text-primary transition-colors">Subscription Audit</div>
-                                            <div className="text-sm text-on-surface-variant">You have 3 inactive streaming services costing you $32/mo.</div>
+                                            <div className="text-sm text-on-surface-variant">You have 3 inactive streaming services costing you ৳32/mo.</div>
                                         </div>
                                     </div>
                                     <div className="flex gap-4 p-4 hover:bg-surface-container-low rounded-2xl transition-colors group cursor-pointer">

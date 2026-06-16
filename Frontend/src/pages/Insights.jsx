@@ -1,6 +1,199 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../api';
 
 const Insights = () => {
+    const [user, setUser] = useState({ name: 'Alex' });
+    const [incomes, setIncomes] = useState([]);
+    const [expenses, setExpenses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        const fetchData = async () => {
+            try {
+                const [incRes, expRes] = await Promise.all([
+                    api.get('/api/income'),
+                    api.get('/api/expenses')
+                ]);
+                setIncomes(incRes.data);
+                setExpenses(expRes.data);
+            } catch (err) {
+                console.error("Error fetching insights data", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+                <div className="w-12 h-12 border-4 border-[#5284FE] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+    // Timezone-safe local date parser
+    const parseLocalDate = (dateStr) => {
+        if (!dateStr) return new Date();
+        const cleanDateStr = dateStr.split('T')[0];
+        const [year, month, day] = cleanDateStr.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    };
+
+    // --- Calculations ---
+
+    // 1. Core metrics
+    const totalIncome = incomes.reduce((sum, i) => sum + parseFloat(i.amount), 0);
+    const totalExpense = expenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const netSavings = totalIncome - totalExpense;
+    const utilizedPercent = totalIncome > 0 ? Math.round((totalExpense / totalIncome) * 100) : 0;
+
+    // 2. Highest Expenses (top 4)
+    const highestExpenses = [...expenses]
+        .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount))
+        .slice(0, 4);
+
+    const getExpenseIconInfo = (category = '') => {
+        const cat = category.toLowerCase();
+        if (cat.includes('study') || cat.includes('book') || cat.includes('education')) {
+            return { icon: 'menu_book', bg: 'bg-[#EEF2FF]', color: 'text-[#5284FE]' };
+        }
+        if (cat.includes('food') || cat.includes('dining') || cat.includes('grocery')) {
+            return { icon: 'shopping_basket', bg: 'bg-[#ECFDF5]', color: 'text-[#10B981]' };
+        }
+        if (cat.includes('entertainment') || cat.includes('movie') || cat.includes('subscription')) {
+            return { icon: 'movie', bg: 'bg-[#F3E8FF]', color: 'text-[#9333EA]' };
+        }
+        if (cat.includes('transport') || cat.includes('ride') || cat.includes('travel')) {
+            return { icon: 'directions_car', bg: 'bg-[#FEF2F2]', color: 'text-[#EF4444]' };
+        }
+        return { icon: 'payments', bg: 'bg-[#F1F5F9]', color: 'text-[#64748B]' };
+    };
+
+    // 3. Category Spends & Donut Chart
+    const categoryTotals = {};
+    expenses.forEach(e => {
+        const cat = e.category || 'Other';
+        categoryTotals[cat] = (categoryTotals[cat] || 0) + parseFloat(e.amount);
+    });
+
+    const categoryPercentList = Object.entries(categoryTotals).map(([category, amount]) => {
+        const percent = totalExpense > 0 ? Math.round((amount / totalExpense) * 100) : 0;
+        return { category, amount, percent };
+    }).sort((a, b) => b.amount - a.amount);
+
+    // Build circle SVG rendering data for Donut
+    // Circumference = 2 * pi * r = 2 * 3.14159 * 40 = 251.327
+    const circumference = 251.327;
+    let cumulativePercent = 0;
+    const donutCircles = categoryPercentList.map((item) => {
+        const dashArrayVal = (item.percent / 100) * circumference;
+        const dashArray = `${dashArrayVal.toFixed(1)} ${(circumference - dashArrayVal).toFixed(1)}`;
+        const dashOffsetVal = -(cumulativePercent / 100) * circumference;
+        const dashOffset = dashOffsetVal.toFixed(1);
+
+        cumulativePercent += item.percent;
+
+        const colors = {
+            Food: { stroke: '#EF4444', bg: 'bg-[#EF4444]' },
+            Transport: { stroke: '#3B82F6', bg: 'bg-[#3B82F6]' },
+            Study: { stroke: '#F59E0B', bg: 'bg-[#F59E0B]' },
+            Entertainment: { stroke: '#10B981', bg: 'bg-[#10B981]' },
+            Housing: { stroke: '#6B7280', bg: 'bg-[#6B7280]' },
+            Health: { stroke: '#EC4899', bg: 'bg-[#EC4899]' }
+        };
+        const config = colors[item.category] || { stroke: '#8B5CF6', bg: 'bg-[#8B5CF6]' };
+
+        return {
+            ...item,
+            dashArray,
+            dashOffset,
+            stroke: config.stroke,
+            bgClass: config.bg
+        };
+    });
+
+    // 4. Expense Trends (Weekly spends in current month)
+    const currentMonthNum = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const currentMonthExpenses = expenses.filter(e => {
+        const d = parseLocalDate(e.date);
+        return d.getMonth() === currentMonthNum && d.getFullYear() === currentYear;
+    });
+
+    let w1 = 0, w2 = 0, w3 = 0, w4 = 0;
+    currentMonthExpenses.forEach(e => {
+        const day = parseLocalDate(e.date).getDate();
+        const amt = parseFloat(e.amount);
+        if (day <= 7) w1 += amt;
+        else if (day <= 14) w2 += amt;
+        else if (day <= 21) w3 += amt;
+        else w4 += amt;
+    });
+
+    const maxWeekly = Math.max(w1, w2, w3, w4, 100);
+    const y1 = 180 - (w1 / maxWeekly) * 140;
+    const y2 = 180 - (w2 / maxWeekly) * 140;
+    const y3 = 180 - (w3 / maxWeekly) * 140;
+    const y4 = 180 - (w4 / maxWeekly) * 140;
+
+    // Cubic bezier path for weekly trends
+    const pathD = `M 0,${y1} C 133,${y1} 133,${y2} 266,${y2} C 400,${y2} 400,${y3} 533,${y3} C 666,${y3} 666,${y4} 800,${y4}`;
+    const fillD = `${pathD} L 800,200 L 0,200 Z`;
+
+    // 5. Savings Growth (last 6 months)
+    const getSavingsHistory = () => {
+        const months = [];
+        const now = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const label = d.toLocaleString('en-US', { month: 'short' });
+            const year = d.getFullYear();
+            const monthNum = d.getMonth();
+            months.push({ label, year, monthNum, income: 0, expense: 0 });
+        }
+
+        incomes.forEach(inc => {
+            const date = parseLocalDate(inc.date);
+            const y = date.getFullYear();
+            const m = date.getMonth();
+            const match = months.find(item => item.year === y && item.monthNum === m);
+            if (match) match.income += parseFloat(inc.amount);
+        });
+
+        expenses.forEach(exp => {
+            const date = parseLocalDate(exp.date);
+            const y = date.getFullYear();
+            const m = date.getMonth();
+            const match = months.find(item => item.year === y && item.monthNum === m);
+            if (match) match.expense += parseFloat(exp.amount);
+        });
+
+        return months.map(m => ({
+            label: m.label,
+            savings: Math.max(0, m.income - m.expense)
+        }));
+    };
+
+    const savingsHistory = getSavingsHistory();
+    const maxSavings = Math.max(...savingsHistory.map(s => s.savings), 100);
+    const totalSavings6M = savingsHistory.reduce((sum, h) => sum + h.savings, 0);
+    const yearlyAccumulationStr = totalSavings6M >= 1000 ? `৳${(totalSavings6M / 1000).toFixed(1)}k` : `৳${totalSavings6M.toLocaleString()}`;
+
+    // Get current month name
+    const currentMonthName = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
     return (
         <div className="relative font-body">
             {/* Header / Search Area */}
@@ -15,14 +208,13 @@ const Insights = () => {
                 </div>
                 <div className="flex items-center gap-6">
                     <div className="flex gap-4 text-[#64748B]">
-                        <button className="hover:text-[#1E293B] transition-colors"><span className="material-symbols-outlined text-[24px]">notifications</span></button>
                         <button className="hover:text-[#1E293B] transition-colors"><span className="material-symbols-outlined text-[24px]">help</span></button>
                     </div>
                     <div className="h-8 w-px bg-[#E2E8F0]"></div>
                     <div className="flex items-center gap-3">
                         <div className="text-right">
-                            <div className="text-[14px] font-bold text-[#1E293B]">Nafiz</div>
-                            <div className="text-[11px] text-[#64748B] font-medium">CSE , UIU</div>
+                            <div className="text-[14px] font-bold text-[#1E293B]">{user.name}</div>
+                            <div className="text-[11px] text-[#64748B] font-medium">Scholar Student</div>
                         </div>
                         <img alt="User" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0yqd9B3StoTF9KvVphgp4kiPbEQ8eqp3cGhLZMJe6SUKzYKGOrjLTHNelNABabZhUbfBiLA8lOovPXkXqMRKI6phWHN0ejH19PXuoNFzxhAr71MZpwh74FUOxx-BQrYyNcIDAyYz4XD3kFWb6b6QeI2vraV4MuoY91CI9lWIncoPYxNI5BeDJAqPQ26WWpBr0O1Q5ampsHBvKcH6hoCJJ2g-VgjF_fMH7RHRwnBB8KbbvhVvvDrLaDRjYNl73NzATX6rJUpwYuofE" className="w-11 h-11 rounded-full outline outline-2 outline-[#CBD5E1]" />
                     </div>
@@ -36,11 +228,8 @@ const Insights = () => {
                     <p className="text-[#64748B] font-medium mt-1">Real-time performance of your academic budget</p>
                 </div>
                 <div className="flex gap-4">
-                    <button className="px-6 py-2.5 rounded-full border border-[#CBD5E1] text-[#475569] font-bold text-[13px] hover:bg-[#F8FAFC] transition-colors">
-                        Export Report
-                    </button>
                     <button className="px-6 py-2.5 rounded-full bg-[#69F6B8] text-[#006947] font-bold text-[13px] hover:bg-[#58E7AB] transition-colors flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">calendar_today</span> September 2026
+                        <span className="material-symbols-outlined text-[16px]">calendar_today</span> {currentMonthName}
                     </button>
                 </div>
             </div>
@@ -55,7 +244,7 @@ const Insights = () => {
                             <span className="material-symbols-outlined text-[18px]">payments</span>
                         </div>
                     </div>
-                    <h3 className="font-headline text-[36px] font-extrabold leading-none mb-6 text-white">$50,000.00</h3>
+                    <h3 className="font-headline text-[36px] font-extrabold leading-none mb-6 text-white">৳{totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
                     <div className="inline-flex items-center gap-1 bg-white/20 px-2.5 py-1 rounded-full backdrop-blur-sm">
                         <span className="material-symbols-outlined text-[14px]">trending_up</span>
                         <span className="text-[10px] font-bold tracking-wider">+12.5% GROWTH</span>
@@ -71,11 +260,11 @@ const Insights = () => {
                             <span className="material-symbols-outlined text-[18px]">pie_chart</span>
                         </div>
                     </div>
-                    <h3 className="font-headline text-[36px] font-extrabold leading-none mb-6 text-white">$37,500.00</h3>
+                    <h3 className="font-headline text-[36px] font-extrabold leading-none mb-6 text-white">৳{totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
                     <div className="w-full bg-white/20 h-[6px] rounded-full overflow-hidden mb-2">
-                        <div className="bg-white h-full shadow-[0_0_8px_rgba(255,255,255,0.8)]" style={{ width: '75%' }}></div>
+                        <div className="bg-white h-full shadow-[0_0_8px_rgba(255,255,255,0.8)]" style={{ width: `${Math.min(utilizedPercent, 100)}%` }}></div>
                     </div>
-                    <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">75% OF TOTAL UTILIZED</span>
+                    <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">{utilizedPercent}% OF TOTAL UTILIZED</span>
                 </div>
 
                 {/* Net Savings */}
@@ -86,10 +275,10 @@ const Insights = () => {
                             <span className="material-symbols-outlined text-[18px]">savings</span>
                         </div>
                     </div>
-                    <h3 className="font-headline text-[36px] font-extrabold leading-none mb-6 text-white">$12,500.00</h3>
+                    <h3 className="font-headline text-[36px] font-extrabold leading-none mb-6 text-white">৳{netSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
                     <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-sm">
                         <div className="w-2 h-2 rounded-full bg-[#69F6B8]"></div>
-                        <span className="text-[10px] font-bold tracking-wider uppercase">On Track</span>
+                        <span className="text-[10px] font-bold tracking-wider uppercase">{netSavings >= 0 ? 'On Track' : 'Deficit'}</span>
                     </div>
                 </div>
             </div>
@@ -106,16 +295,16 @@ const Insights = () => {
                         </div>
                         <div className="bg-[#F1F5F9] rounded-lg flex overflow-hidden p-1">
                             <button className="px-4 py-1.5 rounded-md bg-white text-[#5284FE] font-bold text-[11px] shadow-sm">Weekly</button>
-                            <button className="px-4 py-1.5 rounded-md text-[#64748B] font-bold text-[11px] hover:bg-white/50 transition-colors">Monthly</button>
                         </div>
                     </div>
                     
                     {/* SVG Line Graph */}
                     <div className="w-full relative h-[180px] flex items-end">
                         <svg viewBox="0 0 800 200" className="w-full h-full preserve-3d" preserveAspectRatio="none">
-                            <path d="M 0,200 L 0,160 C 100,160 200,100 300,160 C 400,200 450,40 600,140 C 700,200 750,140 800,80 L 800,200 Z" fill="url(#blue-grad-insights)" opacity="0.8" />
-                            <path d="M 0,160 C 100,160 200,100 300,160 C 400,200 450,40 600,140 C 700,200 750,140 800,80" fill="none" stroke="#0050D4" strokeWidth="4" />
-                            <circle cx="410" cy="100" r="4" fill="white" stroke="#0050D4" strokeWidth="2" />
+                            <path d={fillD} fill="url(#blue-grad-insights)" opacity="0.8" />
+                            <path d={pathD} fill="none" stroke="#0050D4" strokeWidth="4" />
+                            <circle cx="266" cy={y2} r="4" fill="white" stroke="#0050D4" strokeWidth="2" />
+                            <circle cx="533" cy={y3} r="4" fill="white" stroke="#0050D4" strokeWidth="2" />
                         </svg>
                         <defs>
                             <linearGradient id="blue-grad-insights" x1="0" y1="0" x2="0" y2="1">
@@ -126,10 +315,10 @@ const Insights = () => {
                     </div>
                     
                     <div className="flex justify-between w-full mt-4 px-2">
-                        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Week 1</span>
-                        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest pl-[10%]">Week 2</span>
-                        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest pr-[8%]">Week 3</span>
-                        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest pr-4">Week 4</span>
+                        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Week 1 (৳{w1.toFixed(0)})</span>
+                        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Week 2 (৳{w2.toFixed(0)})</span>
+                        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Week 3 (৳{w3.toFixed(0)})</span>
+                        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Week 4 (৳{w4.toFixed(0)})</span>
                     </div>
                 </div>
 
@@ -144,38 +333,49 @@ const Insights = () => {
                         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                             {/* Base Gray */}
                             <circle cx="50" cy="50" r="40" className="text-[#E2E8F0]" strokeWidth="12" fill="none" stroke="currentColor"/>
-                            {/* Blue 40% */}
-                            <circle cx="50" cy="50" r="40" className="text-[#0251CA]" strokeWidth="12" fill="none" stroke="currentColor" strokeDasharray="100 151.2" strokeDashoffset="0"/>
-                            {/* Green 25% */}
-                            <circle cx="50" cy="50" r="40" className="text-[#035E37]" strokeWidth="12" fill="none" stroke="currentColor" strokeDasharray="62.8 188.4" strokeDashoffset="-100"/>
-                            {/* Purple 20% */}
-                            <circle cx="50" cy="50" r="40" className="text-[#6B23C8]" strokeWidth="12" fill="none" stroke="currentColor" strokeDasharray="50.2 201" strokeDashoffset="-162.8"/>
-                            {/* Red/Orange 15% */}
-                            <circle cx="50" cy="50" r="40" className="text-[#FF4B4B]" strokeWidth="12" fill="none" stroke="currentColor" strokeDasharray="37.6 213.6" strokeDashoffset="-213"/>
+                            
+                            {/* Dynamic segments */}
+                            {donutCircles.length === 0 ? (
+                                <circle cx="50" cy="50" r="40" className="text-[#94A3B8]" strokeWidth="12" fill="none" stroke="currentColor"/>
+                            ) : (
+                                donutCircles.map((circle, idx) => (
+                                    <circle 
+                                        key={idx}
+                                        cx="50" 
+                                        cy="50" 
+                                        r="40" 
+                                        stroke={circle.stroke} 
+                                        strokeWidth="12" 
+                                        fill="none" 
+                                        strokeDasharray={circle.dashArray} 
+                                        strokeDashoffset={circle.dashOffset}
+                                        className="transition-all duration-500"
+                                    />
+                                ))
+                            )}
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="font-headline text-[24px] font-extrabold text-[#1E293B] leading-none mb-1">$37k</span>
+                            <span className="font-headline text-[24px] font-extrabold text-[#1E293B] leading-none mb-1">
+                                ৳{totalExpense >= 1000 ? `${(totalExpense / 1000).toFixed(1)}k` : totalExpense.toFixed(0)}
+                            </span>
                             <span className="text-[8px] font-bold text-[#64748B] uppercase tracking-[0.1em]">Total Spent</span>
                         </div>
                     </div>
 
-                    <div className="w-full space-y-3 px-2">
-                        <div className="flex justify-between items-center text-[12px] font-bold">
-                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#0251CA]"></div><span className="text-[#475569]">Study Materials</span></div>
-                            <span className="text-[#1E293B]">40%</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[12px] font-bold">
-                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#035E37]"></div><span className="text-[#475569]">Food</span></div>
-                            <span className="text-[#1E293B]">25%</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[12px] font-bold">
-                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#6B23C8]"></div><span className="text-[#475569]">Entertainment</span></div>
-                            <span className="text-[#1E293B]">20%</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[12px] font-bold">
-                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#FF4B4B]"></div><span className="text-[#475569]">Transport</span></div>
-                            <span className="text-[#1E293B]">15%</span>
-                        </div>
+                    <div className="w-full space-y-3 px-2 max-h-[160px] overflow-y-auto">
+                        {donutCircles.length === 0 ? (
+                            <p className="text-xs text-[#64748B] text-center">No categories recorded</p>
+                        ) : (
+                            donutCircles.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center text-[12px] font-bold">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-2 h-2 rounded-full ${item.bgClass}`}></div>
+                                        <span className="text-[#475569]">{item.category === 'Study' ? 'Study Materials' : item.category === 'Food' ? 'Food & Dining' : item.category}</span>
+                                    </div>
+                                    <span className="text-[#1E293B]">{item.percent}%</span>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
@@ -187,50 +387,28 @@ const Insights = () => {
                 <div className="lg:col-span-4 bg-[#F8FAFC] rounded-[24px] p-8 border border-[#F1F5F9]">
                     <div className="flex justify-between items-end mb-6">
                         <h4 className="font-headline text-[18px] font-bold text-[#1E293B]">Highest Expenses</h4>
-                        <a href="#" className="font-bold text-[11px] text-[#5284FE] hover:underline">See Details</a>
                     </div>
                     
                     <div className="space-y-4">
-                        <div className="bg-white rounded-[16px] p-4 flex items-center gap-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                            <div className="w-10 h-10 rounded-xl bg-[#EEF2FF] text-[#5284FE] flex items-center justify-center">
-                                <span className="material-symbols-outlined text-[20px]">menu_book</span>
-                            </div>
-                            <div className="flex-1">
-                                <h5 className="font-bold text-[#1E293B] text-[13px]">Arch. Textbooks</h5>
-                                <p className="text-[11px] text-[#64748B]">Academic Supplies</p>
-                            </div>
-                            <div className="text-right font-headline font-bold text-[15px] text-[#1E293B]">$4,200</div>
-                        </div>
-                        <div className="bg-white rounded-[16px] p-4 flex items-center gap-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                            <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] text-[#10B981] flex items-center justify-center">
-                                <span className="material-symbols-outlined text-[20px]">shopping_basket</span>
-                            </div>
-                            <div className="flex-1">
-                                <h5 className="font-bold text-[#1E293B] text-[13px]">Weekly Groceries</h5>
-                                <p className="text-[11px] text-[#64748B]">Unimart Superstore</p>
-                            </div>
-                            <div className="text-right font-headline font-bold text-[15px] text-[#1E293B]">$2,800</div>
-                        </div>
-                        <div className="bg-white rounded-[16px] p-4 flex items-center gap-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                            <div className="w-10 h-10 rounded-xl bg-[#F3E8FF] text-[#9333EA] flex items-center justify-center">
-                                <span className="material-symbols-outlined text-[20px]">movie</span>
-                            </div>
-                            <div className="flex-1">
-                                <h5 className="font-bold text-[#1E293B] text-[13px]">Cineplex Premium</h5>
-                                <p className="text-[11px] text-[#64748B]">Entertainment</p>
-                            </div>
-                            <div className="text-right font-headline font-bold text-[15px] text-[#1E293B]">$1,500</div>
-                        </div>
-                        <div className="bg-white rounded-[16px] p-4 flex items-center gap-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                            <div className="w-10 h-10 rounded-xl bg-[#FEF2F2] text-[#EF4444] flex items-center justify-center">
-                                <span className="material-symbols-outlined text-[20px]">directions_car</span>
-                            </div>
-                            <div className="flex-1">
-                                <h5 className="font-bold text-[#1E293B] text-[13px]">Ride Sharing</h5>
-                                <p className="text-[11px] text-[#64748B]">Pathao/Uber Trips</p>
-                            </div>
-                            <div className="text-right font-headline font-bold text-[15px] text-[#1E293B]">$1,200</div>
-                        </div>
+                        {highestExpenses.length === 0 ? (
+                            <p className="text-xs text-[#64748B] text-center py-6">No expenses found</p>
+                        ) : (
+                            highestExpenses.map((e) => {
+                                const iconInfo = getExpenseIconInfo(e.category);
+                                return (
+                                    <div key={e.id} className="bg-white rounded-[16px] p-4 flex items-center gap-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                                        <div className={`w-10 h-10 rounded-xl ${iconInfo.bg} ${iconInfo.color} flex items-center justify-center`}>
+                                            <span className="material-symbols-outlined text-[20px]">{iconInfo.icon}</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h5 className="font-bold text-[#1E293B] text-[13px] truncate max-w-[120px]">{e.description || e.category}</h5>
+                                            <p className="text-[11px] text-[#64748B]">{e.category}</p>
+                                        </div>
+                                        <div className="text-right font-headline font-bold text-[15px] text-[#1E293B]">৳{parseFloat(e.amount).toLocaleString()}</div>
+                                    </div>
+                                );
+                            })
+                        )}
                     </div>
                 </div>
 
@@ -239,36 +417,47 @@ const Insights = () => {
                     <div className="flex justify-between items-start mb-12">
                         <div>
                             <h4 className="font-headline text-[18px] font-bold text-[#1E293B]">Savings Growth</h4>
-                            <p className="text-[13px] text-[#64748B] font-medium">April - September performance</p>
+                            <p className="text-[13px] text-[#64748B] font-medium">Performance over last 6 months</p>
                         </div>
                         <div className="text-right">
-                            <div className="font-headline text-[24px] font-extrabold text-[#035E37] leading-none mb-1">$75.4k</div>
-                            <div className="text-[9px] font-bold tracking-[0.1em] text-[#64748B] uppercase">Yearly Accumulation</div>
+                            <div className="font-headline text-[24px] font-extrabold text-[#035E37] leading-none mb-1">{yearlyAccumulationStr}</div>
+                            <div className="text-[9px] font-bold tracking-[0.1em] text-[#64748B] uppercase">6M Accumulation</div>
                         </div>
                     </div>
                     
                     {/* SVG Bar Chart Overlay */}
-                    <div className="w-full flex-1 flex items-end justify-between px-2 gap-4 pt-8">
-                        <div className="w-full bg-[#E2E8F0] rounded-t-xl opacity-70" style={{ height: '30%' }}></div>
-                        <div className="w-full bg-[#E2E8F0] rounded-t-xl opacity-70" style={{ height: '45%' }}></div>
-                        <div className="w-full bg-[#E2E8F0] rounded-t-xl opacity-70" style={{ height: '35%' }}></div>
-                        <div className="w-full bg-[#E2E8F0] rounded-t-xl opacity-70" style={{ height: '60%' }}></div>
-                        <div className="w-full bg-[#E2E8F0] rounded-t-xl opacity-70" style={{ height: '80%' }}></div>
-                        <div className="w-full bg-[#0251CA] rounded-t-xl shadow-[0_0_24px_rgba(2,81,202,0.4)]" style={{ height: '100%' }}></div>
+                    <div className="w-full flex-1 flex items-end justify-between px-2 gap-4 pt-8 h-[120px]">
+                        {savingsHistory.map((item, idx) => {
+                            const percentHeight = maxSavings > 0 ? Math.round((item.savings / maxSavings) * 100) : 0;
+                            const isCurrentMonth = idx === savingsHistory.length - 1;
+                            const barBg = isCurrentMonth ? 'bg-[#0251CA]' : 'bg-[#E2E8F0]';
+                            const shadowClass = isCurrentMonth ? 'shadow-[0_0_24px_rgba(2,81,202,0.4)]' : '';
+                            const opacityClass = isCurrentMonth ? '' : 'opacity-70';
+                            return (
+                                <div 
+                                    key={idx}
+                                    title={`${item.label}: ৳${item.savings.toFixed(2)}`}
+                                    className={`w-full ${barBg} ${shadowClass} ${opacityClass} rounded-t-xl transition-all duration-500`} 
+                                    style={{ height: `${Math.max(percentHeight, 10)}%` }}
+                                ></div>
+                            );
+                        })}
                     </div>
                     
                     <div className="flex justify-between w-full mt-4 px-2">
-                        <span className="text-[10px] w-full text-center font-bold text-[#64748B] uppercase tracking-widest">Apr</span>
-                        <span className="text-[10px] w-full text-center font-bold text-[#64748B] uppercase tracking-widest">May</span>
-                        <span className="text-[10px] w-full text-center font-bold text-[#64748B] uppercase tracking-widest">Jun</span>
-                        <span className="text-[10px] w-full text-center font-bold text-[#64748B] uppercase tracking-widest">Jul</span>
-                        <span className="text-[10px] w-full text-center font-bold text-[#64748B] uppercase tracking-widest">Aug</span>
-                        <span className="text-[10px] w-full text-center font-bold text-[#0251CA] uppercase tracking-widest">Sep</span>
+                        {savingsHistory.map((item, idx) => (
+                            <span 
+                                key={idx} 
+                                className={`text-[10px] w-full text-center font-bold uppercase tracking-widest ${idx === savingsHistory.length - 1 ? 'text-[#0251CA]' : 'text-[#64748B]'}`}
+                            >
+                                {item.label}
+                            </span>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            {/* Footer Links (Optional since global footer exists, but to match specific layout request) */}
+            {/* Footer Links */}
             <div className="flex justify-end gap-6 mt-10 opacity-70">
                 <a href="#" className="text-[10px] font-bold tracking-wider text-[#64748B] hover:text-[#1E293B]">System Status</a>
                 <a href="#" className="text-[10px] font-bold tracking-wider text-[#64748B] hover:text-[#1E293B]">Privacy Policy</a>

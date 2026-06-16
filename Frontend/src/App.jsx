@@ -8,6 +8,7 @@ import Expenses from './pages/Expenses';
 import Income from './pages/Income';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
+import ForgotPassword from './pages/ForgotPassword';
 import Landing from './pages/Landing';
 import AddExpense from './pages/AddExpense';
 import AddCategory from './pages/AddCategory';
@@ -130,6 +131,7 @@ function DocumentTitleUpdater() {
     if (path === '/') title = 'BudgetBuddy / Home';
     else if (path === '/signin') title = 'BudgetBuddy / Sign In';
     else if (path === '/signup') title = 'BudgetBuddy / Sign Up';
+    else if (path === '/forgot-password') title = 'BudgetBuddy / Forgot Password';
     else if (path === '/dashboard') title = 'BudgetBuddy / Dashboard';
     else if (path === '/dashboard/budget') title = 'BudgetBuddy / Budget';
     else if (path === '/dashboard/expenses') title = 'BudgetBuddy / Expenses';
@@ -152,6 +154,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/dashboard" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="budget" element={<Budget />} />

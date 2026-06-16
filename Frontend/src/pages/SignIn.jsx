@@ -1,8 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../api';
 
 const SignIn = () => {
     const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+        try {
+            const response = await api.post('/api/auth/signin', { email, password });
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.response?.data?.error || 'Sign in failed. Please check your credentials.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="bg-surface font-body text-on-surface overflow-hidden">
             <main className="flex min-h-screen">
@@ -40,11 +62,15 @@ const SignIn = () => {
                             <p className="text-on-surface-variant">Continue your financial journey.</p>
                         </div>
                         
+                        {error && (
+                            <div className="p-4 bg-error-container text-on-error-container rounded-xl text-sm font-bold flex items-center gap-2">
+                                <span className="material-symbols-outlined">error</span>
+                                {error}
+                            </div>
+                        )}
+
                         {/* Form */}
-                        <form className="space-y-6" onSubmit={(e) => {
-                            e.preventDefault();
-                            navigate('/dashboard');
-                        }}>
+                        <form className="space-y-6" onSubmit={handleSubmit}>
                             <div className="space-y-2">
                                 <label className="block text-sm font-semibold text-on-surface-variant ml-1" htmlFor="email">Email address</label>
                                 <div className="relative group">
@@ -54,13 +80,16 @@ const SignIn = () => {
                                         name="email" 
                                         placeholder="name@bscse.uiu.ac.bd" 
                                         type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center px-1">
                                     <label className="block text-sm font-semibold text-on-surface-variant" htmlFor="password">Password</label>
-                                    <a className="text-xs font-bold text-primary hover:underline transition-all" href="#">Forgot Password?</a>
+                                    <Link className="text-xs font-bold text-primary hover:underline transition-all" to="/forgot-password">Forgot Password?</Link>
                                 </div>
                                 <div className="relative group">
                                     <input 
@@ -69,14 +98,18 @@ const SignIn = () => {
                                         name="password" 
                                         placeholder="••••••••" 
                                         type="password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                     />
                                 </div>
                             </div>
                             <button 
-                                className="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold py-4 rounded-md shadow-[0px_20px_40px_rgba(0,80,212,0.15)] hover:scale-[1.02] active:scale-95 transition-all" 
+                                className="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold py-4 rounded-md shadow-[0px_20px_40px_rgba(0,80,212,0.15)] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50" 
                                 type="submit"
+                                disabled={loading}
                             >
-                                Sign In
+                                {loading ? 'Signing In...' : 'Sign In'}
                             </button>
                         </form>
                         

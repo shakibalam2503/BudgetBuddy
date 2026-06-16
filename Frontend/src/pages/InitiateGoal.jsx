@@ -1,13 +1,75 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';
 
 const InitiateGoal = () => {
     const navigate = useNavigate();
+    const [name, setName] = useState('');
+    const [targetAmount, setTargetAmount] = useState('');
+    const [targetDate, setTargetDate] = useState('');
+    const [notes, setNotes] = useState('');
+    const [activeGoals, setActiveGoals] = useState([]);
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    useEffect(() => {
+        const fetchActiveGoals = async () => {
+            try {
+                const response = await api.get('/api/goals');
+                const active = response.data.filter(g => parseFloat(g.current_amount) < parseFloat(g.target_amount));
+                setActiveGoals(active);
+            } catch (err) {
+                console.error("Error fetching active goals", err);
+            }
+        };
+
+        fetchActiveGoals();
+    }, []);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle goal submission logic here
-        navigate('/dashboard/goals');
+        setError('');
+
+        if (!name || !targetAmount || !targetDate) {
+            setError('Please enter name, target amount, and target date.');
+            return;
+        }
+
+        const parsedAmount = parseFloat(targetAmount);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            setError('Please enter a valid target amount.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await api.post('/api/goals', {
+                name,
+                target_amount: parsedAmount,
+                target_date: targetDate,
+                notes
+            });
+            navigate('/dashboard/goals');
+        } catch (err) {
+            setError(err.response?.data?.error || 'Failed to create savings goal.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Helper to map icons based on goal names
+    const getGoalIconInfo = (name = '') => {
+        const n = name.toLowerCase();
+        if (n.includes('laptop') || n.includes('mac') || n.includes('computer')) {
+            return { icon: 'laptop_mac', bg: 'bg-[#EEF2FF]', color: 'text-[#5284FE]' };
+        }
+        if (n.includes('trip') || n.includes('travel') || n.includes('flight') || n.includes('japan') || n.includes('summer')) {
+            return { icon: 'flight_takeoff', bg: 'bg-[#ECFDF5]', color: 'text-[#10B981]' };
+        }
+        if (n.includes('car') || n.includes('ride') || n.includes('bike')) {
+            return { icon: 'directions_car', bg: 'bg-[#FEF2F2]', color: 'text-[#EF4444]' };
+        }
+        return { icon: 'savings', bg: 'bg-[#FFF7ED]', color: 'text-[#F97316]' };
     };
 
     return (
@@ -21,9 +83,6 @@ const InitiateGoal = () => {
                 </div>
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-4 text-on-surface-variant">
-                        <button className="hover:opacity-80 transition-opacity">
-                            <span className="material-symbols-outlined">notifications</span>
-                        </button>
                         <button className="hover:opacity-80 transition-opacity">
                             <span className="material-symbols-outlined">help_outline</span>
                         </button>
@@ -42,6 +101,14 @@ const InitiateGoal = () => {
                             <h2 className="text-2xl font-extrabold tracking-tight text-on-surface mb-2 font-headline">New Academic Milestone</h2>
                             <p className="text-on-surface-variant text-sm font-body">Define your target, set a date, and start saving towards your next achievement.</p>
                         </header>
+
+                        {error && (
+                            <div className="mb-6 p-4 bg-error-container text-on-error-container rounded-xl text-sm font-bold flex items-center gap-2">
+                                <span className="material-symbols-outlined">error</span>
+                                {error}
+                            </div>
+                        )}
+
                         <form onSubmit={handleSubmit} className="space-y-8">
                             {/* Goal Name Field */}
                             <div className="space-y-2">
@@ -52,6 +119,8 @@ const InitiateGoal = () => {
                                         placeholder="e.g., New MacBook Pro" 
                                         type="text"
                                         required
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
                                     />
                                 </div>
                             </div>
@@ -61,13 +130,15 @@ const InitiateGoal = () => {
                                 <div className="space-y-2">
                                     <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 ml-1">Target Amount</label>
                                     <div className="relative flex items-center group">
-                                        <span className="absolute left-5 text-xl font-bold text-[#5284FE]">$</span>
+                                        <span className="absolute left-5 text-xl font-bold text-[#5284FE]">৳</span>
                                         <input 
                                             className="w-full pl-10 pr-5 py-4 bg-surface-container-low border-none rounded-xl text-xl font-headline font-bold text-on-surface placeholder:text-outline-variant focus:ring-0 transition-all border-b-2 border-transparent focus:border-[#5284FE] focus:bg-surface-container-low" 
                                             placeholder="0.00" 
                                             step="0.01" 
                                             type="number"
                                             required
+                                            value={targetAmount}
+                                            onChange={(e) => setTargetAmount(e.target.value)}
                                         />
                                     </div>
                                 </div>
@@ -79,6 +150,8 @@ const InitiateGoal = () => {
                                             className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl text-on-surface font-body font-medium focus:ring-2 focus:ring-[#5284FE]/20 transition-all focus:bg-surface-container-low" 
                                             type="date"
                                             required
+                                            value={targetDate}
+                                            onChange={(e) => setTargetDate(e.target.value)}
                                         />
                                     </div>
                                 </div>
@@ -87,12 +160,22 @@ const InitiateGoal = () => {
                             {/* Notes Field */}
                             <div className="space-y-2">
                                 <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 ml-1">Motivation / Notes</label>
-                                <textarea className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl text-on-surface font-body placeholder:text-outline-variant focus:ring-2 focus:ring-[#5284FE]/20 transition-all focus:bg-surface-container-low resize-none" placeholder="Why is this goal important?" rows="3"></textarea>
+                                <textarea 
+                                    className="w-full px-5 py-4 bg-surface-container-low border-none rounded-xl text-on-surface font-body placeholder:text-outline-variant focus:ring-2 focus:ring-[#5284FE]/20 transition-all focus:bg-surface-container-low resize-none" 
+                                    placeholder="Why is this goal important?" 
+                                    rows="3"
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                ></textarea>
                             </div>
                             {/* Action Button */}
-                            <button className="w-full py-5 bg-gradient-to-r from-[#4A85F6] to-[#5284FE] text-white font-headline font-bold text-lg rounded-xl shadow-lg shadow-[#5284FE]/30 hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-3" type="submit">
+                            <button 
+                                className="w-full py-5 bg-gradient-to-r from-[#4A85F6] to-[#5284FE] text-white font-headline font-bold text-lg rounded-xl shadow-lg shadow-[#5284FE]/30 hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50" 
+                                type="submit"
+                                disabled={loading}
+                            >
                                 <span className="material-symbols-outlined text-white" style={{fontVariationSettings: "'FILL' 1"}}>track_changes</span>
-                                Initiate Goal
+                                {loading ? 'Initiating Goal...' : 'Initiate Goal'}
                             </button>
                         </form>
                     </div>
@@ -116,28 +199,27 @@ const InitiateGoal = () => {
                         <div className="bg-white p-6 rounded-[24px] border border-[#F1F5F9] shadow-sm">
                             <h4 className="font-headline font-bold text-[#1E293B] mb-4 text-[14px]">Active Priorities</h4>
                             <div className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-[#EEF2FF] flex items-center justify-center text-[#5284FE]">
-                                        <span className="material-symbols-outlined text-[16px]">laptop_mac</span>
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="text-[12px] font-bold text-[#1E293B]">Buy Laptop</div>
-                                        <div className="w-full bg-[#E2E8F0] h-[4px] rounded-full mt-1">
-                                            <div className="bg-[#5284FE] h-full rounded-full" style={{width: '46%'}}></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-[#ECFDF5] flex items-center justify-center text-[#10B981]">
-                                        <span className="material-symbols-outlined text-[16px]">flight_takeoff</span>
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="text-[12px] font-bold text-[#1E293B]">Summer Trip</div>
-                                        <div className="w-full bg-[#E2E8F0] h-[4px] rounded-full mt-1">
-                                            <div className="bg-[#10B981] h-full rounded-full" style={{width: '20%'}}></div>
-                                        </div>
-                                    </div>
-                                </div>
+                                {activeGoals.length === 0 ? (
+                                    <p className="text-xs text-on-surface-variant">No active priorities</p>
+                                ) : (
+                                    activeGoals.map((g) => {
+                                        const iconInfo = getGoalIconInfo(g.name);
+                                        const completionRate = Math.round((g.current_amount / g.target_amount) * 100);
+                                        return (
+                                            <div key={g.id} className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-lg ${iconInfo.bg} flex items-center justify-center ${iconInfo.color}`}>
+                                                    <span className="material-symbols-outlined text-[16px]">{iconInfo.icon}</span>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="text-[12px] font-bold text-[#1E293B]">{g.name}</div>
+                                                    <div className="w-full bg-[#E2E8F0] h-[4px] rounded-full mt-1">
+                                                        <div className="h-full rounded-full bg-[#5284FE]" style={{width: `${Math.min(completionRate, 100)}%`}}></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
                             </div>
                         </div>
                     </div>
