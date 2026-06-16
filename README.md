@@ -250,88 +250,18 @@ BudgetBuddy/
 
 ## Database Design
 
-The application uses the database named `budget_buddy`.
+BudgetBuddy uses a MySQL database named `budget_buddy`. The backend can automatically create the database and required tables when the server starts. A manual setup script is also available in `Backend/schema.sql`.
 
-### Main Tables
+Main database tables:
 
-#### `users`
+- `users` - stores registered user account information
+- `incomes` - stores user income records
+- `expenses` - stores expense records, including optional receipt paths
+- `budgets` - stores category-wise budget limits
+- `goals` - stores savings goals and progress
+- `password_resets` - stores temporary verification codes for password recovery
 
-Stores registered user information.
-
-| Column | Description |
-|---|---|
-| `id` | Primary key |
-| `name` | User's full name |
-| `email` | Unique email address |
-| `password` | Hashed password |
-| `phone` | Optional phone number |
-| `created_at` | Account creation timestamp |
-
-#### `incomes`
-
-Stores user income records.
-
-| Column | Description |
-|---|---|
-| `id` | Primary key |
-| `user_id` | Related user ID |
-| `source` | Income source |
-| `category` | Income category |
-| `amount` | Income amount |
-| `date` | Income date |
-| `created_at` | Record creation timestamp |
-
-#### `expenses`
-
-Stores user expense records.
-
-| Column | Description |
-|---|---|
-| `id` | Primary key |
-| `user_id` | Related user ID |
-| `category` | Expense category |
-| `amount` | Expense amount |
-| `date` | Expense date |
-| `description` | Optional expense description |
-| `receipt_url` | Optional uploaded receipt path |
-| `created_at` | Record creation timestamp |
-
-#### `budgets`
-
-Stores category-wise budget limits.
-
-| Column | Description |
-|---|---|
-| `id` | Primary key |
-| `user_id` | Related user ID |
-| `category` | Budget category |
-| `amount_limit` | Allocated budget limit |
-
-#### `goals`
-
-Stores savings goals.
-
-| Column | Description |
-|---|---|
-| `id` | Primary key |
-| `user_id` | Related user ID |
-| `name` | Goal name |
-| `target_amount` | Required target amount |
-| `current_amount` | Current saved amount |
-| `target_date` | Optional target completion date |
-| `notes` | Optional notes |
-
-#### `password_resets`
-
-Stores temporary reset codes for password recovery.
-
-| Column | Description |
-|---|---|
-| `id` | Primary key |
-| `email` | User email |
-| `code` | 6-digit verification code |
-| `expires_at` | Code expiration timestamp |
-| `created_at` | Code creation timestamp |
+Each finance-related table is connected to the logged-in user through `user_id`, so users only access their own records.
 
 ---
 
