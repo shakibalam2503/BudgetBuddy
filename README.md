@@ -129,9 +129,8 @@ The dashboard provides a summarized view of the user's financial condition:
 | Axios | HTTP requests to backend API |
 | Tailwind CSS | Utility-first styling through CDN configuration |
 | Material Symbols | Icon set used across the interface |
-| html2canvas | Converts UI sections into canvas images for reports |
 | jsPDF | Generates downloadable PDF reports |
-| Lucide React | Additional icon dependency |
+
 
 ### Backend
 
@@ -143,7 +142,6 @@ The dashboard provides a summarized view of the user's financial condition:
 | bcryptjs | Password hashing |
 | JSON Web Token | Authentication token generation and verification |
 | Multer | Receipt image upload handling |
-| CORS | Cross-origin request support |
 | PDFKit | PDF-related backend dependency, currently available for future backend report generation |
 
 ### Database
